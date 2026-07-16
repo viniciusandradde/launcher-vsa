@@ -68,7 +68,6 @@ dependencies {
 
     // Glance App Widget (Jetpack)
     implementation(libs.androidx.glance.appwidget)
-    implementation(libs.androidx.glance.material3)
 
     debugImplementation(libs.androidx.ui.tooling)
 

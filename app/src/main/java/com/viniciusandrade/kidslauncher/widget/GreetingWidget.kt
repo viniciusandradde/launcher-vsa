@@ -2,6 +2,7 @@ package com.viniciusandrade.kidslauncher.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -16,10 +17,10 @@ import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
-import androidx.glance.material3.GlanceTheme
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import androidx.glance.unit.ColorProvider
 import com.viniciusandrade.kidslauncher.MainActivity
 import com.viniciusandrade.kidslauncher.util.TimeGreeting
 import java.text.SimpleDateFormat
@@ -27,25 +28,27 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+// Cores fixas (mesma paleta "Pequeno" do app). Evitamos GlanceTheme/glance-material3
+// para manter o widget com dependências mínimas e API estável.
+private val WidgetBackground = Color(0xFFFF7043)
+private val WidgetOnBackground = Color(0xFFFFFFFF)
+
 /**
- * A "glanceable" home-screen widget built with Jetpack Glance (Compose-style API
- * that compiles down to RemoteViews). Shows a friendly greeting and the current
- * time; tapping it opens the launcher. Refreshed on the schedule declared in
- * res/xml/greeting_widget_info.xml.
+ * Widget "glanceable" da tela inicial feito com Jetpack Glance (API estilo Compose
+ * que vira RemoteViews). Mostra saudação + hora; ao tocar, abre o launcher.
+ * Atualizado no período declarado em res/xml/greeting_widget_info.xml.
  */
 class GreetingWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        // provideGlance is called on each update; read the time here so every
-        // refresh renders the current value.
+        // provideGlance roda a cada atualização; lemos a hora aqui para cada
+        // refresh renderizar o valor atual.
         val now = Date()
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
         val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(now)
 
         provideContent {
-            GlanceTheme {
-                WidgetContent(greeting = "${TimeGreeting.forHour(hour)}!", time = time)
-            }
+            WidgetContent(greeting = "${TimeGreeting.forHour(hour)}!", time = time)
         }
     }
 }
@@ -55,7 +58,7 @@ private fun WidgetContent(greeting: String, time: String) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(GlanceTheme.colors.primaryContainer)
+            .background(ColorProvider(WidgetBackground))
             .cornerRadius(24.dp)
             .padding(16.dp)
             .clickable(actionStartActivity<MainActivity>()),
@@ -65,7 +68,7 @@ private fun WidgetContent(greeting: String, time: String) {
         Text(
             text = time,
             style = TextStyle(
-                color = GlanceTheme.colors.onPrimaryContainer,
+                color = ColorProvider(WidgetOnBackground),
                 fontSize = 34.sp,
                 fontWeight = FontWeight.Bold,
             ),
@@ -73,7 +76,7 @@ private fun WidgetContent(greeting: String, time: String) {
         Text(
             text = greeting,
             style = TextStyle(
-                color = GlanceTheme.colors.onPrimaryContainer,
+                color = ColorProvider(WidgetOnBackground),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
             ),
