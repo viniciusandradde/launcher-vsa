@@ -1,12 +1,14 @@
 package com.viniciusandrade.kidslauncher.widget
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.action.Action
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.action.actionStartActivity
@@ -47,21 +49,28 @@ class GreetingWidget : GlanceAppWidget() {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
         val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(now)
 
+        // Ação de abrir o launcher, construída aqui onde temos o Context.
+        val openLauncher = actionStartActivity(Intent(context, MainActivity::class.java))
+
         provideContent {
-            WidgetContent(greeting = "${TimeGreeting.forHour(hour)}!", time = time)
+            WidgetContent(
+                greeting = "${TimeGreeting.forHour(hour)}!",
+                time = time,
+                onClick = openLauncher,
+            )
         }
     }
 }
 
 @Composable
-private fun WidgetContent(greeting: String, time: String) {
+private fun WidgetContent(greeting: String, time: String, onClick: Action) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
             .background(ColorProvider(WidgetBackground))
             .cornerRadius(24.dp)
             .padding(16.dp)
-            .clickable(actionStartActivity<MainActivity>()),
+            .clickable(onClick),
         verticalAlignment = Alignment.CenterVertically,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

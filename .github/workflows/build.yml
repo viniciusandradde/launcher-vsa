@@ -1,11 +1,14 @@
 name: Build APK
 
-# Gera o APK de debug a cada push e permite rodar manualmente.
-# O APK fica disponível como "Artifact" na aba Actions para baixar no celular.
+# Gera o APK de debug a cada push, publica como artifact e também num Release
+# (tag apk-debug) para download direto pelo celular, sem precisar descompactar.
 on:
   push:
     branches: [ "**" ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -35,3 +38,14 @@ jobs:
           name: kids-launcher-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      - name: Publicar o APK num Release (download direto)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete apk-debug --yes --cleanup-tag || true
+          gh release create apk-debug \
+            app/build/outputs/apk/debug/app-debug.apk \
+            --title "APK debug (última build)" \
+            --notes "APK de debug gerado automaticamente do commit ${{ github.sha }}. Baixe o app-debug.apk abaixo e instale no celular (permita instalar de fontes desconhecidas)." \
+            --target "${{ github.sha }}"
