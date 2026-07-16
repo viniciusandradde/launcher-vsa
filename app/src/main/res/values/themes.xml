@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Base platform theme. The real UI is Jetpack Compose (MaterialTheme lives in
+      Theme.kt); this only sets the window background shown before Compose draws
+      and hides the action bar, so we avoid pulling in Material Components XML.
+    -->
+    <style name="Theme.KidsLauncherVSA" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>
