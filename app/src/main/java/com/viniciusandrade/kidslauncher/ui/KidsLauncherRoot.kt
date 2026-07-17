@@ -65,6 +65,15 @@ fun KidsLauncherRoot(viewModel: KidsLauncherViewModel) {
                         ).show()
                     }
                 },
+                onOpenVideo = { video ->
+                    viewModel.openVideo(video) {
+                        Toast.makeText(
+                            context,
+                            "Não consegui abrir o vídeo",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                },
                 onOpenSettings = { screen = Screen.PIN },
             )
 
@@ -83,6 +92,8 @@ fun KidsLauncherRoot(viewModel: KidsLauncherViewModel) {
                 onChangePin = viewModel::setPin,
                 onSetTimeLimit = viewModel::setTimeLimit,
                 onSetChildName = viewModel::setChildName,
+                onAddVideo = viewModel::addVideo,
+                onRemoveVideo = viewModel::removeVideo,
             )
 
             Screen.TIME_UP -> TimeUpScreen(

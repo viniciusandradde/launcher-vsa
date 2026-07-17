@@ -14,6 +14,11 @@ diário opcional**: ao acabar o tempo, aparece uma tela "Acabou o tempo por hoje
 (céu noturno) destravada só com o PIN — inspirado no timer do YouTube Kids. Os pais
 também podem **definir o nome da criança** (personaliza a saudação).
 
+**Vídeos do YouTube:** nas configurações os pais colam o link de um vídeo do
+YouTube; ele vira um **cartão com a miniatura (preview)** na tela da criança —
+toca e o vídeo abre. As miniaturas vêm de `img.youtube.com` (carregadas com Coil),
+por isso o app pede permissão de **internet**.
+
 O launcher mostra **apenas os apps liberados** para o perfil ativo (whitelist),
 esconde todo o resto do sistema e protege o acesso às configurações com um **PIN
 dos pais**. Não exige permissões especiais nem root — funciona como launcher

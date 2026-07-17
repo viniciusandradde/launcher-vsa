@@ -3,6 +3,7 @@ package com.viniciusandrade.kidslauncher.data
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import com.viniciusandrade.kidslauncher.data.model.LauncherApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -58,6 +59,20 @@ class AppRepository(private val context: Context) {
                 ?.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
                 ?: error("Sem intent de abertura para ${app.packageName}")
             context.startActivity(launchIntent)
+        } catch (t: Throwable) {
+            onError(t)
+        }
+    }
+
+    /**
+     * Open a web link (e.g. a YouTube video) in whatever app handles it — the
+     * YouTube app if installed, otherwise a browser. Reports failures via [onError].
+     */
+    fun openUrl(url: String, onError: (Throwable) -> Unit = {}) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
         } catch (t: Throwable) {
             onError(t)
         }

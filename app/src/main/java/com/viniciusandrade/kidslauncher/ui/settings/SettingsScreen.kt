@@ -14,7 +14,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Password
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -35,10 +37,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.core.graphics.drawable.toBitmap
+import coil.compose.AsyncImage
 import com.viniciusandrade.kidslauncher.data.AppSettings
 import com.viniciusandrade.kidslauncher.data.model.KidProfile
 import com.viniciusandrade.kidslauncher.ui.LauncherUiState
@@ -53,6 +59,8 @@ fun SettingsScreen(
     onChangePin: (String) -> Unit,
     onSetTimeLimit: (KidProfile, Int) -> Unit,
     onSetChildName: (KidProfile, String) -> Unit,
+    onAddVideo: (KidProfile, String, String) -> Boolean,
+    onRemoveVideo: (KidProfile, String) -> Unit,
 ) {
     // The profile currently being configured is the active one; selecting a chip
     // both activates it and switches which whitelist we edit.
@@ -155,6 +163,90 @@ fun SettingsScreen(
                         )
                     }
                 }
+            }
+
+            item {
+                SectionTitle("Vídeos do YouTube de ${editing.displayName}")
+                Text(
+                    text = "Cole o link de um vídeo. Ele vira um cartão com a miniatura que a criança toca para assistir.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+
+                var url by remember(editing) { mutableStateOf("") }
+                var videoName by remember(editing) { mutableStateOf("") }
+                var error by remember(editing) { mutableStateOf(false) }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedTextField(
+                        value = url,
+                        onValueChange = { url = it; error = false },
+                        label = { Text("Link do YouTube") },
+                        placeholder = { Text("https://youtu.be/...") },
+                        singleLine = true,
+                        isError = error,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = videoName,
+                        onValueChange = { videoName = it.take(30) },
+                        label = { Text("Nome (opcional)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    if (error) {
+                        Text(
+                            text = "Link inválido. Use um link ou ID do YouTube.",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            if (onAddVideo(editing, url, videoName)) {
+                                url = ""; videoName = ""; error = false
+                            } else {
+                                error = true
+                            }
+                        },
+                        enabled = url.isNotBlank(),
+                    ) {
+                        Text("Adicionar vídeo")
+                    }
+                }
+            }
+
+            items(state.settings.videosFor(editing), key = { it.id }) { video ->
+                ListItem(
+                    leadingContent = {
+                        AsyncImage(
+                            model = video.thumbnailUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(width = 72.dp, height = 44.dp)
+                                .clip(RoundedCornerShape(6.dp)),
+                        )
+                    },
+                    headlineContent = {
+                        Text(video.displayName, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    },
+                    supportingContent = {
+                        Text(video.id, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    },
+                    trailingContent = {
+                        IconButton(onClick = { onRemoveVideo(editing, video.id) }) {
+                            Icon(Icons.Rounded.Delete, contentDescription = "Remover vídeo")
+                        }
+                    },
+                )
+                HorizontalDivider()
             }
 
             item {

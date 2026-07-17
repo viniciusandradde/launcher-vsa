@@ -29,9 +29,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.viniciusandrade.kidslauncher.data.model.KidProfile
+import com.viniciusandrade.kidslauncher.data.model.KidVideo
 import com.viniciusandrade.kidslauncher.data.model.LauncherApp
 import com.viniciusandrade.kidslauncher.ui.LauncherUiState
 import com.viniciusandrade.kidslauncher.ui.components.AppGridItem
+import com.viniciusandrade.kidslauncher.ui.components.KidVideoCard
 import com.viniciusandrade.kidslauncher.util.TimeGreeting
 import kotlinx.coroutines.delay
 import java.util.Calendar
@@ -40,6 +42,7 @@ import java.util.Calendar
 fun LauncherScreen(
     state: LauncherUiState,
     onLaunch: (LauncherApp) -> Unit,
+    onOpenVideo: (KidVideo) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     // A launcher IS the home screen: swallow Back so a child can never "exit"
@@ -59,11 +62,13 @@ fun LauncherScreen(
                 // Colourful GCompris / YouTube-Kids-style board for the 4-year-old.
                 PlayfulLauncher(
                     apps = state.visibleApps,
+                    videos = state.videos,
                     greeting = greeting,
                     displayName = childName,
                     remainingSeconds = state.settings.remainingSeconds(profile),
                     loading = state.loading,
                     onLaunch = onLaunch,
+                    onOpenVideo = onOpenVideo,
                 )
             } else {
                 StandardLauncher(
@@ -72,6 +77,7 @@ fun LauncherScreen(
                     greeting = greeting,
                     state = state,
                     onLaunch = onLaunch,
+                    onOpenVideo = onOpenVideo,
                 )
             }
 
@@ -115,6 +121,7 @@ private fun StandardLauncher(
     greeting: String,
     state: LauncherUiState,
     onLaunch: (LauncherApp) -> Unit,
+    onOpenVideo: (KidVideo) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -136,7 +143,7 @@ private fun StandardLauncher(
 
         when {
             state.loading -> LoadingState()
-            state.visibleApps.isEmpty() -> EmptyState()
+            state.visibleApps.isEmpty() && state.videos.isEmpty() -> EmptyState()
             else -> LazyVerticalGrid(
                 columns = GridCells.Fixed(profile.gridColumns),
                 contentPadding = PaddingValues(20.dp),
@@ -144,7 +151,10 @@ private fun StandardLauncher(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxSize(),
             ) {
-                items(state.visibleApps, key = { it.key }) { app ->
+                items(state.videos, key = { "vid_${it.id}" }) { video ->
+                    KidVideoCard(video = video, onClick = { onOpenVideo(video) })
+                }
+                items(state.visibleApps, key = { "app_${it.key}" }) { app ->
                     AppGridItem(
                         app = app,
                         iconSize = 64,

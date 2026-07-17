@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.viniciusandrade.kidslauncher.data.model.KidProfile
+import com.viniciusandrade.kidslauncher.data.model.KidVideo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.security.MessageDigest
@@ -29,9 +30,13 @@ data class AppSettings(
     val usedSeconds: Int = 0,
     /** Custom child name per profile id (blank => fall back to the profile name). */
     val childNames: Map<String, String> = emptyMap(),
+    /** Parent-curated YouTube videos per profile id. */
+    val videos: Map<String, List<KidVideo>> = emptyMap(),
 ) {
     fun allowedPackages(profile: KidProfile): Set<String> =
         whitelist[profile.id].orEmpty()
+
+    fun videosFor(profile: KidProfile): List<KidVideo> = videos[profile.id].orEmpty()
 
     /** Raw stored name for the text field (may be blank). */
     fun rawChildName(profile: KidProfile): String = childNames[profile.id].orEmpty()
@@ -81,6 +86,7 @@ class SettingsRepository(private val context: Context) {
         val USAGE_DATE = stringPreferencesKey("usage_date")
         val USAGE_USED_SECONDS = intPreferencesKey("usage_used_seconds")
         fun childName(profileId: String) = stringPreferencesKey("child_name_$profileId")
+        fun videos(profileId: String) = stringSetPreferencesKey("videos_$profileId")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -93,6 +99,11 @@ class SettingsRepository(private val context: Context) {
         val childNames = KidProfile.entries.associate { profile ->
             profile.id to (prefs[Keys.childName(profile.id)] ?: "")
         }
+        val videos = KidProfile.entries.associate { profile ->
+            profile.id to prefs[Keys.videos(profile.id)].orEmpty()
+                .map { KidVideo.fromStorage(it) }
+                .sortedBy { it.displayName.lowercase() }
+        }
         AppSettings(
             activeProfile = KidProfile.fromId(prefs[Keys.ACTIVE_PROFILE]),
             pinHash = prefs[Keys.PIN_HASH],
@@ -102,6 +113,7 @@ class SettingsRepository(private val context: Context) {
             usageDate = prefs[Keys.USAGE_DATE] ?: "",
             usedSeconds = prefs[Keys.USAGE_USED_SECONDS] ?: 0,
             childNames = childNames,
+            videos = videos,
         )
     }
 
@@ -139,6 +151,28 @@ class SettingsRepository(private val context: Context) {
     /** Set the child's custom display name for [profile] (trimmed, max 20 chars). */
     suspend fun setChildName(profile: KidProfile, name: String) {
         context.dataStore.edit { it[Keys.childName(profile.id)] = name.trim().take(20) }
+    }
+
+    /** Add a curated YouTube [video] to [profile] (replaces any entry with same id). */
+    suspend fun addVideo(profile: KidProfile, video: KidVideo) {
+        val key = Keys.videos(profile.id)
+        context.dataStore.edit { prefs ->
+            val current = prefs[key].orEmpty()
+                .filterNot { KidVideo.fromStorage(it).id == video.id }
+                .toMutableSet()
+            current.add(video.storageKey)
+            prefs[key] = current
+        }
+    }
+
+    /** Remove the video with [videoId] from [profile]. */
+    suspend fun removeVideo(profile: KidProfile, videoId: String) {
+        val key = Keys.videos(profile.id)
+        context.dataStore.edit { prefs ->
+            prefs[key] = prefs[key].orEmpty()
+                .filterNot { KidVideo.fromStorage(it).id == videoId }
+                .toSet()
+        }
     }
 
     /**

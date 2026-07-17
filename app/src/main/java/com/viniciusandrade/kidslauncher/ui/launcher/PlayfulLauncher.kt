@@ -26,7 +26,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.viniciusandrade.kidslauncher.data.model.KidVideo
 import com.viniciusandrade.kidslauncher.data.model.LauncherApp
+import com.viniciusandrade.kidslauncher.ui.components.KidVideoCard
 import com.viniciusandrade.kidslauncher.ui.components.PlayfulAppCard
 import com.viniciusandrade.kidslauncher.ui.theme.KidCardColors
 
@@ -38,11 +40,13 @@ import com.viniciusandrade.kidslauncher.ui.theme.KidCardColors
 @Composable
 fun PlayfulLauncher(
     apps: List<LauncherApp>,
+    videos: List<KidVideo>,
     greeting: String,
     displayName: String,
     remainingSeconds: Int?,
     loading: Boolean,
     onLaunch: (LauncherApp) -> Unit,
+    onOpenVideo: (KidVideo) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -58,7 +62,7 @@ fun PlayfulLauncher(
                     contentAlignment = Alignment.Center,
                 ) { CircularProgressIndicator(color = Color.White) }
 
-                apps.isEmpty() -> Box(
+                apps.isEmpty() && videos.isEmpty() -> Box(
                     modifier = Modifier.fillMaxSize().padding(32.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -77,7 +81,10 @@ fun PlayfulLauncher(
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    items(apps, key = { it.key }) { app ->
+                    items(videos, key = { "vid_${it.id}" }) { video ->
+                        KidVideoCard(video = video, onClick = { onOpenVideo(video) })
+                    }
+                    items(apps, key = { "app_${it.key}" }) { app ->
                         PlayfulAppCard(
                             app = app,
                             cardColor = colorFor(app),

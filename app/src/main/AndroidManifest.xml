@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Needed to load YouTube video thumbnails and open video links. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!--
       A launcher needs to see the other installed launchable apps in order to
       show them. On Android 11+ package visibility is filtered, so we declare a

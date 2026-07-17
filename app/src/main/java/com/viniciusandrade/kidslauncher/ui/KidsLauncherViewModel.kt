@@ -11,7 +11,9 @@ import com.viniciusandrade.kidslauncher.data.AppRepository
 import com.viniciusandrade.kidslauncher.data.AppSettings
 import com.viniciusandrade.kidslauncher.data.SettingsRepository
 import com.viniciusandrade.kidslauncher.data.model.KidProfile
+import com.viniciusandrade.kidslauncher.data.model.KidVideo
 import com.viniciusandrade.kidslauncher.data.model.LauncherApp
+import com.viniciusandrade.kidslauncher.util.YouTube
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +36,8 @@ data class LauncherUiState(
     val visibleApps: List<LauncherApp> = emptyList(),
     /** Every installed app — used by the parent settings screen. */
     val allApps: List<LauncherApp> = emptyList(),
+    /** Curated YouTube videos for the active profile. */
+    val videos: List<KidVideo> = emptyList(),
 )
 
 class KidsLauncherViewModel(
@@ -63,6 +67,7 @@ class KidsLauncherViewModel(
                 settings = settings,
                 visibleApps = apps.filter { it.packageName in allowed },
                 allApps = apps,
+                videos = settings.videosFor(settings.activeProfile),
             )
         }.stateIn(
             scope = viewModelScope,
@@ -113,6 +118,28 @@ class KidsLauncherViewModel(
 
     fun setChildName(profile: KidProfile, name: String) {
         viewModelScope.launch { settingsRepository.setChildName(profile, name) }
+    }
+
+    /**
+     * Parse [url] into a YouTube video and add it to [profile]. Returns false if
+     * the link isn't a recognisable YouTube URL/id (so the UI can warn the parent).
+     */
+    fun addVideo(profile: KidProfile, url: String, name: String): Boolean {
+        val id = YouTube.extractVideoId(url) ?: return false
+        viewModelScope.launch {
+            settingsRepository.addVideo(profile, KidVideo(id = id, name = name.trim().take(30)))
+        }
+        return true
+    }
+
+    fun removeVideo(profile: KidProfile, videoId: String) {
+        viewModelScope.launch { settingsRepository.removeVideo(profile, videoId) }
+    }
+
+    /** Open a curated video; counts towards the daily budget like launching an app. */
+    fun openVideo(video: KidVideo, onError: (Throwable) -> Unit = {}) {
+        lastAppLaunchAt = System.currentTimeMillis()
+        appRepository.openUrl(video.watchUrl, onError)
     }
 
     /** Parent override from the "time's up" screen: clears today's usage. */

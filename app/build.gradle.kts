@@ -66,6 +66,9 @@ dependencies {
 
     implementation(libs.androidx.datastore.preferences)
 
+    // Image loading for YouTube thumbnails
+    implementation(libs.coil.compose)
+
     // Glance App Widget (Jetpack)
     implementation(libs.androidx.glance.appwidget)
 
