@@ -82,6 +82,7 @@ fun KidsLauncherRoot(viewModel: KidsLauncherViewModel) {
                 onToggleApp = viewModel::setAppAllowed,
                 onChangePin = viewModel::setPin,
                 onSetTimeLimit = viewModel::setTimeLimit,
+                onSetChildName = viewModel::setChildName,
             )
 
             Screen.TIME_UP -> TimeUpScreen(

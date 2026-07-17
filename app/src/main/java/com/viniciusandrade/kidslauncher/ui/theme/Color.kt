@@ -40,6 +40,13 @@ val KidCardColors = listOf(
     Color(0xFF5C6BC0), // indigo
 )
 
-/** Soft top/bottom tints for the playful background gradient. */
-val PlayfulBgTop = Color(0xFFFFF3E0)
-val PlayfulBgBottom = Color(0xFFFFE0F0)
+// --- GCompris-style outdoor scene (sky, sun, clouds, hills, grass) -------------
+val SkyTop = Color(0xFF4FC3F7)      // deeper blue at the top
+val SkyHorizon = Color(0xFFB3E5FC)  // pale blue near the hills
+val SunColor = Color(0xFFFFD54F)
+val CloudColor = Color(0xFFFFFFFF)
+val HillBack = Color(0xFF9CCC65)    // far, lighter hill
+val HillFront = Color(0xFF7CB342)   // near, deeper hill
+val GrassColor = Color(0xFF689F38)  // grass band at the very bottom
+val NightSkyTop = Color(0xFF1A237E) // dusk for the "time's up" screen
+val NightSkyBottom = Color(0xFF5C6BC0)

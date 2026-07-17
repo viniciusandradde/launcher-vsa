@@ -48,6 +48,7 @@ fun LauncherScreen(
 
     val profile = state.settings.activeProfile
     val greeting = rememberGreeting()
+    val childName = state.settings.childName(profile)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -59,13 +60,14 @@ fun LauncherScreen(
                 PlayfulLauncher(
                     apps = state.visibleApps,
                     greeting = greeting,
-                    profileName = profile.displayName,
+                    displayName = childName,
                     remainingSeconds = state.settings.remainingSeconds(profile),
                     loading = state.loading,
                     onLaunch = onLaunch,
                 )
             } else {
                 StandardLauncher(
+                    displayName = childName,
                     profile = profile,
                     greeting = greeting,
                     state = state,
@@ -108,6 +110,7 @@ private fun rememberGreeting(): String {
 /** Plain icon grid used by the older ("Junior") profile. */
 @Composable
 private fun StandardLauncher(
+    displayName: String,
     profile: KidProfile,
     greeting: String,
     state: LauncherUiState,
@@ -120,7 +123,7 @@ private fun StandardLauncher(
                 .padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 4.dp),
         ) {
             Text(
-                text = "$greeting, ${profile.displayName}! 👋",
+                text = "$greeting, $displayName! 👋",
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )

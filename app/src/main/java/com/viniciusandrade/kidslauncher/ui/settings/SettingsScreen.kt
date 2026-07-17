@@ -23,6 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -51,6 +52,7 @@ fun SettingsScreen(
     onToggleApp: (KidProfile, String, Boolean) -> Unit,
     onChangePin: (String) -> Unit,
     onSetTimeLimit: (KidProfile, Int) -> Unit,
+    onSetChildName: (KidProfile, String) -> Unit,
 ) {
     // The profile currently being configured is the active one; selecting a chip
     // both activates it and switches which whitelist we edit.
@@ -92,6 +94,25 @@ fun SettingsScreen(
                         )
                     }
                 }
+            }
+
+            item {
+                SectionTitle("Nome de ${editing.displayName}")
+                // Seeded once per profile; persists on every keystroke.
+                var name by remember(editing) { mutableStateOf(state.settings.rawChildName(editing)) }
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it.take(20)
+                        onSetChildName(editing, name)
+                    },
+                    label = { Text("Nome da criança") },
+                    placeholder = { Text(editing.displayName) },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                )
             }
 
             item {

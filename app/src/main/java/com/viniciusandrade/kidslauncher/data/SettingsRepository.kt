@@ -27,9 +27,18 @@ data class AppSettings(
     val usageDate: String = "",
     /** Seconds of screen time already used today. */
     val usedSeconds: Int = 0,
+    /** Custom child name per profile id (blank => fall back to the profile name). */
+    val childNames: Map<String, String> = emptyMap(),
 ) {
     fun allowedPackages(profile: KidProfile): Set<String> =
         whitelist[profile.id].orEmpty()
+
+    /** Raw stored name for the text field (may be blank). */
+    fun rawChildName(profile: KidProfile): String = childNames[profile.id].orEmpty()
+
+    /** Name to show the child; falls back to the profile's default display name. */
+    fun childName(profile: KidProfile): String =
+        rawChildName(profile).ifBlank { profile.displayName }
 
     /** Daily limit in minutes for [profile]; 0 means unlimited. */
     fun timeLimitMinutes(profile: KidProfile): Int = timeLimits[profile.id] ?: 0
@@ -71,6 +80,7 @@ class SettingsRepository(private val context: Context) {
         fun timeLimit(profileId: String) = intPreferencesKey("time_limit_$profileId")
         val USAGE_DATE = stringPreferencesKey("usage_date")
         val USAGE_USED_SECONDS = intPreferencesKey("usage_used_seconds")
+        fun childName(profileId: String) = stringPreferencesKey("child_name_$profileId")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -80,6 +90,9 @@ class SettingsRepository(private val context: Context) {
         val timeLimits = KidProfile.entries.associate { profile ->
             profile.id to (prefs[Keys.timeLimit(profile.id)] ?: 0)
         }
+        val childNames = KidProfile.entries.associate { profile ->
+            profile.id to (prefs[Keys.childName(profile.id)] ?: "")
+        }
         AppSettings(
             activeProfile = KidProfile.fromId(prefs[Keys.ACTIVE_PROFILE]),
             pinHash = prefs[Keys.PIN_HASH],
@@ -88,6 +101,7 @@ class SettingsRepository(private val context: Context) {
             timeLimits = timeLimits,
             usageDate = prefs[Keys.USAGE_DATE] ?: "",
             usedSeconds = prefs[Keys.USAGE_USED_SECONDS] ?: 0,
+            childNames = childNames,
         )
     }
 
@@ -120,6 +134,11 @@ class SettingsRepository(private val context: Context) {
     /** Set the daily screen-time limit (minutes; 0 = unlimited) for [profile]. */
     suspend fun setTimeLimit(profile: KidProfile, minutes: Int) {
         context.dataStore.edit { it[Keys.timeLimit(profile.id)] = minutes.coerceAtLeast(0) }
+    }
+
+    /** Set the child's custom display name for [profile] (trimmed, max 20 chars). */
+    suspend fun setChildName(profile: KidProfile, name: String) {
+        context.dataStore.edit { it[Keys.childName(profile.id)] = name.trim().take(20) }
     }
 
     /**

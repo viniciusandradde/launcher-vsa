@@ -1,6 +1,5 @@
 package com.viniciusandrade.kidslauncher.ui.launcher
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +18,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -27,36 +29,34 @@ import androidx.compose.ui.unit.sp
 import com.viniciusandrade.kidslauncher.data.model.LauncherApp
 import com.viniciusandrade.kidslauncher.ui.components.PlayfulAppCard
 import com.viniciusandrade.kidslauncher.ui.theme.KidCardColors
-import com.viniciusandrade.kidslauncher.ui.theme.PlayfulBgBottom
-import com.viniciusandrade.kidslauncher.ui.theme.PlayfulBgTop
 
 /**
- * Colourful "big kid board" for the youngest profile: a soft gradient backdrop,
- * a cheerful header with a time-left pill, and a 2-column grid of bright app cards.
+ * Colourful "big kid board" for the youngest profile: a GCompris-style outdoor
+ * scene (sky, sun, clouds, hills), a cheerful header with a time-left pill, and a
+ * 2-column grid of bright app cards that pop when tapped.
  */
 @Composable
 fun PlayfulLauncher(
     apps: List<LauncherApp>,
     greeting: String,
-    profileName: String,
+    displayName: String,
     remainingSeconds: Int?,
     loading: Boolean,
     onLaunch: (LauncherApp) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(PlayfulBgTop, PlayfulBgBottom))),
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
+        // Painted scene behind everything.
+        GComprisBackground()
+
         Column(modifier = Modifier.fillMaxSize()) {
-            PlayfulHeader(greeting, profileName, remainingSeconds)
+            PlayfulHeader(greeting, displayName, remainingSeconds)
 
             when {
                 loading -> Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
-                ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
+                ) { CircularProgressIndicator(color = Color.White) }
 
                 apps.isEmpty() -> Box(
                     modifier = Modifier.fillMaxSize().padding(32.dp),
@@ -65,7 +65,7 @@ fun PlayfulLauncher(
                     Text(
                         text = "Nenhum app ainda! 🧸\nPeça para um adulto liberar no cadeado 🔒.",
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = Color.White,
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -91,28 +91,38 @@ fun PlayfulLauncher(
 }
 
 @Composable
-private fun PlayfulHeader(greeting: String, profileName: String, remainingSeconds: Int?) {
+private fun PlayfulHeader(greeting: String, displayName: String, remainingSeconds: Int?) {
+    // White text with a soft shadow so it stays readable over the sky.
+    val shadow = Shadow(color = Color(0x66000000), offset = Offset(0f, 2f), blurRadius = 6f)
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 4.dp),
     ) {
         Text(
-            text = "$greeting, $profileName! 🎈",
-            fontSize = 30.sp,
-            fontWeight = FontWeight.Black,
-            color = MaterialTheme.colorScheme.onSurface,
+            text = "$greeting, $displayName! 🎈",
+            style = TextStyle(
+                color = Color.White,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Black,
+                shadow = shadow,
+            ),
         )
         Text(
             text = "Toque para brincar 🚀",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.primary,
+            style = TextStyle(
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                shadow = shadow,
+            ),
         )
         if (remainingSeconds != null) {
             val minutes = (remainingSeconds + 59) / 60 // round up
             Surface(
                 color = MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(50),
+                shadowElevation = 3.dp,
                 modifier = Modifier.padding(top = 10.dp),
             ) {
                 Text(

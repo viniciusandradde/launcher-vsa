@@ -18,10 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.viniciusandrade.kidslauncher.ui.theme.PlayfulBgBottom
-import com.viniciusandrade.kidslauncher.ui.theme.PlayfulBgTop
+import com.viniciusandrade.kidslauncher.ui.theme.NightSkyBottom
+import com.viniciusandrade.kidslauncher.ui.theme.NightSkyTop
 
 /**
  * Friendly full-screen lock shown when the daily screen-time budget runs out.
@@ -36,7 +37,7 @@ fun TimeUpScreen(onUnlock: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(PlayfulBgTop, PlayfulBgBottom)))
+            .background(Brush.verticalGradient(listOf(NightSkyTop, NightSkyBottom)))
             .padding(32.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -50,14 +51,14 @@ fun TimeUpScreen(onUnlock: () -> Unit) {
                 text = "Acabou o tempo por hoje!",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = Color.White,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(12.dp))
             Text(
                 text = "Vamos brincar de outra coisa?\nPeça para um adulto se precisar. 💛",
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary,
+                color = Color(0xFFE8EAF6),
                 textAlign = TextAlign.Center,
             )
         }
@@ -69,7 +70,11 @@ fun TimeUpScreen(onUnlock: () -> Unit) {
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp),
         ) {
-            Text("Sou adulto 🔒", style = MaterialTheme.typography.labelLarge)
+            Text(
+                "Sou adulto 🔒",
+                style = MaterialTheme.typography.labelLarge,
+                color = Color(0xFFB0BEC5),
+            )
         }
     }
 }

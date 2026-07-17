@@ -111,6 +111,10 @@ class KidsLauncherViewModel(
         viewModelScope.launch { settingsRepository.setTimeLimit(profile, minutes) }
     }
 
+    fun setChildName(profile: KidProfile, name: String) {
+        viewModelScope.launch { settingsRepository.setChildName(profile, name) }
+    }
+
     /** Parent override from the "time's up" screen: clears today's usage. */
     fun grantMoreTime() {
         viewModelScope.launch { settingsRepository.resetUsage(today()) }

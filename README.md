@@ -7,10 +7,12 @@ Launcher Android personalizado para crianças, com **dois perfis num único APK*
 | **Pequeno** | 4 anos | **cartões grandes coloridos** (estilo GCompris / YouTube Kids) + **cronômetro de tempo de tela** | lúdico, colorido |
 | **Junior** | 10 anos | grade de ícones, 3 colunas | azul/teal |
 
-O perfil **Pequeno** tem um visual lúdico (fundo em gradiente, cartões coloridos
-por app, mascotes/emojis) e um **cronômetro diário opcional**: ao acabar o tempo,
-aparece uma tela "Acabou o tempo por hoje! 🌙" que só é destravada com o PIN dos
-pais — inspirado no timer do YouTube Kids.
+O perfil **Pequeno** tem um visual lúdico estilo **GCompris**: cena de **céu azul
+com sol, nuvens, colinas verdes e grama** (desenhada no Compose, sem imagens),
+cartões grandes e coloridos que **dão um "pop" ao toque**, e um **cronômetro
+diário opcional**: ao acabar o tempo, aparece uma tela "Acabou o tempo por hoje! 🌙"
+(céu noturno) destravada só com o PIN — inspirado no timer do YouTube Kids. Os pais
+também podem **definir o nome da criança** (personaliza a saudação).
 
 O launcher mostra **apenas os apps liberados** para o perfil ativo (whitelist),
 esconde todo o resto do sistema e protege o acesso às configurações com um **PIN
