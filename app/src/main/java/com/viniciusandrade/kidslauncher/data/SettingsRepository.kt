@@ -3,6 +3,7 @@ package com.viniciusandrade.kidslauncher.data
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -20,13 +21,38 @@ data class AppSettings(
     /** Allowed package names per profile id. */
     val whitelist: Map<String, Set<String>>,
     val setupComplete: Boolean,
+    /** Daily screen-time limit in minutes per profile id (0 = no limit). */
+    val timeLimits: Map<String, Int> = emptyMap(),
+    /** Calendar day (yyyy-MM-dd) the [usedSeconds] counter belongs to. */
+    val usageDate: String = "",
+    /** Seconds of screen time already used today. */
+    val usedSeconds: Int = 0,
 ) {
     fun allowedPackages(profile: KidProfile): Set<String> =
         whitelist[profile.id].orEmpty()
 
+    /** Daily limit in minutes for [profile]; 0 means unlimited. */
+    fun timeLimitMinutes(profile: KidProfile): Int = timeLimits[profile.id] ?: 0
+
+    /** Whether today's screen time for [profile] is used up (limit reached). */
+    fun isTimeUp(profile: KidProfile): Boolean {
+        val limit = timeLimitMinutes(profile)
+        return limit > 0 && usedSeconds >= limit * 60
+    }
+
+    /** Seconds still available today for [profile]; null when there is no limit. */
+    fun remainingSeconds(profile: KidProfile): Int? {
+        val limit = timeLimitMinutes(profile)
+        if (limit <= 0) return null
+        return (limit * 60 - usedSeconds).coerceAtLeast(0)
+    }
+
     companion object {
         /** PIN used until a parent sets their own during first-run setup. */
         const val DEFAULT_PIN = "1234"
+
+        /** Preset options (in minutes) offered to parents; 0 = no limit. */
+        val TIME_LIMIT_OPTIONS = listOf(0, 15, 30, 45, 60, 90)
     }
 }
 
@@ -42,17 +68,26 @@ class SettingsRepository(private val context: Context) {
         val PIN_HASH = stringPreferencesKey("pin_hash")
         val SETUP_COMPLETE = booleanPreferencesKey("setup_complete")
         fun whitelist(profileId: String) = stringSetPreferencesKey("whitelist_$profileId")
+        fun timeLimit(profileId: String) = intPreferencesKey("time_limit_$profileId")
+        val USAGE_DATE = stringPreferencesKey("usage_date")
+        val USAGE_USED_SECONDS = intPreferencesKey("usage_used_seconds")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
         val whitelist = KidProfile.entries.associate { profile ->
             profile.id to prefs[Keys.whitelist(profile.id)].orEmpty()
         }
+        val timeLimits = KidProfile.entries.associate { profile ->
+            profile.id to (prefs[Keys.timeLimit(profile.id)] ?: 0)
+        }
         AppSettings(
             activeProfile = KidProfile.fromId(prefs[Keys.ACTIVE_PROFILE]),
             pinHash = prefs[Keys.PIN_HASH],
             whitelist = whitelist,
             setupComplete = prefs[Keys.SETUP_COMPLETE] ?: false,
+            timeLimits = timeLimits,
+            usageDate = prefs[Keys.USAGE_DATE] ?: "",
+            usedSeconds = prefs[Keys.USAGE_USED_SECONDS] ?: 0,
         )
     }
 
@@ -79,6 +114,34 @@ class SettingsRepository(private val context: Context) {
             val current = prefs[key].orEmpty().toMutableSet()
             if (allowed) current.add(packageName) else current.remove(packageName)
             prefs[key] = current
+        }
+    }
+
+    /** Set the daily screen-time limit (minutes; 0 = unlimited) for [profile]. */
+    suspend fun setTimeLimit(profile: KidProfile, minutes: Int) {
+        context.dataStore.edit { it[Keys.timeLimit(profile.id)] = minutes.coerceAtLeast(0) }
+    }
+
+    /**
+     * Add [delta] seconds to today's usage counter, rolling the counter over to a
+     * fresh 0 when [today] differs from the stored day. Called both by the
+     * per-tick ticker and when the child returns from a launched app.
+     */
+    suspend fun addUsageSeconds(delta: Int, today: String) {
+        if (delta <= 0) return
+        context.dataStore.edit { prefs ->
+            val sameDay = prefs[Keys.USAGE_DATE] == today
+            val base = if (sameDay) (prefs[Keys.USAGE_USED_SECONDS] ?: 0) else 0
+            prefs[Keys.USAGE_DATE] = today
+            prefs[Keys.USAGE_USED_SECONDS] = base + delta
+        }
+    }
+
+    /** Reset today's usage to zero (parent "grant more time" / new day). */
+    suspend fun resetUsage(today: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.USAGE_DATE] = today
+            prefs[Keys.USAGE_USED_SECONDS] = 0
         }
     }
 

@@ -19,3 +19,27 @@ val JuniorBackground = Color(0xFFF3F7FF)
 val OnPrimary = Color(0xFFFFFFFF)
 val SurfaceLight = Color(0xFFFFFFFF)
 val OnSurfaceLight = Color(0xFF1B1B1F)
+
+// --- "Pequeno" playful mode (GCompris-like / YouTube Kids cards) ---------------
+
+/**
+ * Bright, saturated tile colours. Each app gets one (stable by package hash) so
+ * the grid looks like a colourful GCompris / YouTube Kids board. Every colour is
+ * dark enough to carry white text/icon on top with good contrast.
+ */
+val KidCardColors = listOf(
+    Color(0xFFEF5350), // red
+    Color(0xFF42A5F5), // blue
+    Color(0xFF66BB6A), // green
+    Color(0xFFAB47BC), // purple
+    Color(0xFFFFA726), // orange
+    Color(0xFF26C6DA), // cyan
+    Color(0xFFEC407A), // pink
+    Color(0xFF7E57C2), // deep purple
+    Color(0xFF9CCC65), // light green
+    Color(0xFF5C6BC0), // indigo
+)
+
+/** Soft top/bottom tints for the playful background gradient. */
+val PlayfulBgTop = Color(0xFFFFF3E0)
+val PlayfulBgBottom = Color(0xFFFFE0F0)

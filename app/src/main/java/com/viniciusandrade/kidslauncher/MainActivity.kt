@@ -28,5 +28,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.refreshApps()
+        // Credit time spent in a launched app towards the daily screen-time budget.
+        viewModel.onLauncherResumed()
     }
 }

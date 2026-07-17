@@ -2,10 +2,15 @@
 
 Launcher Android personalizado para crianças, com **dois perfis num único APK**:
 
-| Perfil | Idade | Grade | Cara |
-|--------|-------|-------|------|
-| **Pequeno** | 4 anos | 2 colunas, ícones grandes | laranja/coral |
-| **Junior** | 10 anos | 3 colunas | azul/teal |
+| Perfil | Idade | Layout | Cara |
+|--------|-------|--------|------|
+| **Pequeno** | 4 anos | **cartões grandes coloridos** (estilo GCompris / YouTube Kids) + **cronômetro de tempo de tela** | lúdico, colorido |
+| **Junior** | 10 anos | grade de ícones, 3 colunas | azul/teal |
+
+O perfil **Pequeno** tem um visual lúdico (fundo em gradiente, cartões coloridos
+por app, mascotes/emojis) e um **cronômetro diário opcional**: ao acabar o tempo,
+aparece uma tela "Acabou o tempo por hoje! 🌙" que só é destravada com o PIN dos
+pais — inspirado no timer do YouTube Kids.
 
 O launcher mostra **apenas os apps liberados** para o perfil ativo (whitelist),
 esconde todo o resto do sistema e protege o acesso às configurações com um **PIN
@@ -221,7 +226,11 @@ Cada perfil tem sua própria whitelist; troque o perfil ativo para configurar o 
 Ordenado por valor × esforço:
 
 1. **First-run setup** obrigando a definir o PIN (hoje há um PIN padrão `1234`).
-2. **Limites de tempo por app/dia** — `UsageStatsManager` + `WorkManager`.
+2. **Cronômetro por app + bloqueio dentro de outros apps** — hoje o cronômetro é
+   um MVP: conta o tempo de uso via launcher (tick enquanto está no launcher +
+   tempo gasto no app ao voltar, com teto anti-ocioso) e mostra a tela de bloqueio
+   quando a criança volta. Não interrompe *dentro* de outro app — isso exigiria
+   `UsageStatsManager` + serviço em segundo plano.
 3. **Modo kiosk real** — `startLockTask()` com o app como *Device Owner*
    (provisionado via ADB/MDM).
 4. **Reordenar/agrupar apps** por arrastar, favoritos, pastas.

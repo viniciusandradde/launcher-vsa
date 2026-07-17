@@ -15,6 +15,11 @@ enum class KidProfile(
     val gridColumns: Int,
     /** Whether to always render the app name below each icon. */
     val showLabels: Boolean,
+    /**
+     * When true, use the colourful "GCompris / YouTube Kids" card layout instead
+     * of the plain icon grid. Reserved for the youngest child.
+     */
+    val playful: Boolean,
 ) {
     PEQUENO(
         id = "pequeno",
@@ -22,6 +27,7 @@ enum class KidProfile(
         ageLabel = "4 anos",
         gridColumns = 2,
         showLabels = true,
+        playful = true,
     ),
     JUNIOR(
         id = "junior",
@@ -29,6 +35,7 @@ enum class KidProfile(
         ageLabel = "10 anos",
         gridColumns = 3,
         showLabels = true,
+        playful = false,
     );
 
     companion object {

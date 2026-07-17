@@ -47,36 +47,30 @@ fun LauncherScreen(
     BackHandler(enabled = true) { /* intentionally consumed */ }
 
     val profile = state.settings.activeProfile
-    val iconSize = if (profile == KidProfile.PEQUENO) 88 else 64
+    val greeting = rememberGreeting()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
 
-            Column(modifier = Modifier.fillMaxSize()) {
-                GreetingHeader(profile)
-
-                when {
-                    state.loading -> LoadingState()
-                    state.visibleApps.isEmpty() -> EmptyState()
-                    else -> LazyVerticalGrid(
-                        columns = GridCells.Fixed(profile.gridColumns),
-                        contentPadding = PaddingValues(20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        items(state.visibleApps, key = { it.key }) { app ->
-                            AppGridItem(
-                                app = app,
-                                iconSize = iconSize,
-                                showLabel = profile.showLabels,
-                                onClick = { onLaunch(app) },
-                            )
-                        }
-                    }
-                }
+            if (profile.playful) {
+                // Colourful GCompris / YouTube-Kids-style board for the 4-year-old.
+                PlayfulLauncher(
+                    apps = state.visibleApps,
+                    greeting = greeting,
+                    profileName = profile.displayName,
+                    remainingSeconds = state.settings.remainingSeconds(profile),
+                    loading = state.loading,
+                    onLaunch = onLaunch,
+                )
+            } else {
+                StandardLauncher(
+                    profile = profile,
+                    greeting = greeting,
+                    state = state,
+                    onLaunch = onLaunch,
+                )
             }
 
             // Discreet parental gate: a faint lock in the corner. Tapping it
@@ -98,34 +92,65 @@ fun LauncherScreen(
     }
 }
 
+/** Time-of-day greeting that refreshes as the clock crosses minute boundaries. */
 @Composable
-private fun GreetingHeader(profile: KidProfile) {
-    // Recompute the greeting whenever the clock crosses a minute boundary.
+private fun rememberGreeting(): String {
     val minuteTick by produceState(initialValue = 0) {
         while (true) {
             value += 1
             delay(30_000)
         }
     }
-    // Recomputed whenever the minute tick advances.
     val hour = remember(minuteTick) { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
-    val greeting = TimeGreeting.forHour(hour)
+    return TimeGreeting.forHour(hour)
+}
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 4.dp),
-    ) {
-        Text(
-            text = "$greeting, ${profile.displayName}! 👋",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = "Escolha um app para começar",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.primary,
-        )
+/** Plain icon grid used by the older ("Junior") profile. */
+@Composable
+private fun StandardLauncher(
+    profile: KidProfile,
+    greeting: String,
+    state: LauncherUiState,
+    onLaunch: (LauncherApp) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 4.dp),
+        ) {
+            Text(
+                text = "$greeting, ${profile.displayName}! 👋",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = "Escolha um app para começar",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+
+        when {
+            state.loading -> LoadingState()
+            state.visibleApps.isEmpty() -> EmptyState()
+            else -> LazyVerticalGrid(
+                columns = GridCells.Fixed(profile.gridColumns),
+                contentPadding = PaddingValues(20.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                items(state.visibleApps, key = { it.key }) { app ->
+                    AppGridItem(
+                        app = app,
+                        iconSize = 64,
+                        showLabel = profile.showLabels,
+                        onClick = { onLaunch(app) },
+                    )
+                }
+            }
+        }
     }
 }
 

@@ -1,6 +1,8 @@
 package com.viniciusandrade.kidslauncher.ui.settings
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,6 +38,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import com.viniciusandrade.kidslauncher.data.AppSettings
 import com.viniciusandrade.kidslauncher.data.model.KidProfile
 import com.viniciusandrade.kidslauncher.ui.LauncherUiState
 
@@ -47,6 +50,7 @@ fun SettingsScreen(
     onSelectProfile: (KidProfile) -> Unit,
     onToggleApp: (KidProfile, String, Boolean) -> Unit,
     onChangePin: (String) -> Unit,
+    onSetTimeLimit: (KidProfile, Int) -> Unit,
 ) {
     // The profile currently being configured is the active one; selecting a chip
     // both activates it and switches which whitelist we edit.
@@ -101,6 +105,34 @@ fun SettingsScreen(
                         text = "  Alterar PIN dos pais",
                         style = MaterialTheme.typography.labelLarge,
                     )
+                }
+            }
+
+            item {
+                SectionTitle("Tempo de tela de ${editing.displayName}")
+                Text(
+                    text = "Limite diário. Ao acabar, aparece a tela \"Acabou o tempo\" (destravada só com PIN).",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+                val currentLimit = state.settings.timeLimitMinutes(editing)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    AppSettings.TIME_LIMIT_OPTIONS.forEach { minutes ->
+                        FilterChip(
+                            selected = minutes == currentLimit,
+                            onClick = { onSetTimeLimit(editing, minutes) },
+                            label = {
+                                Text(if (minutes == 0) "Sem limite" else "$minutes min")
+                            },
+                        )
+                    }
                 }
             }
 

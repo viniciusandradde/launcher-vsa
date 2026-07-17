@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 data class LauncherUiState(
     val loading: Boolean = true,
@@ -41,6 +44,12 @@ class KidsLauncherViewModel(
 
     private val installedApps = MutableStateFlow<List<LauncherApp>>(emptyList())
     private val loading = MutableStateFlow(true)
+
+    /** Wall-clock (ms) when the child last opened an app and left the launcher. */
+    private var lastAppLaunchAt: Long? = null
+
+    private fun today(): String =
+        SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 
     val uiState: StateFlow<LauncherUiState> =
         combine(
@@ -73,8 +82,39 @@ class KidsLauncherViewModel(
         }
     }
 
-    fun launch(app: LauncherApp, onError: (Throwable) -> Unit = {}) =
+    fun launch(app: LauncherApp, onError: (Throwable) -> Unit = {}) {
+        // Remember when we handed control to another app so we can count that
+        // time towards the daily budget once the child comes back.
+        lastAppLaunchAt = System.currentTimeMillis()
         appRepository.launch(app, onError)
+    }
+
+    /**
+     * Called from the Activity's onResume. Rolls the usage counter to today and,
+     * if the child is returning from a launched app, adds the time they spent
+     * there (capped so a device left asleep overnight doesn't blow the budget).
+     */
+    fun onLauncherResumed() {
+        val launchedAt = lastAppLaunchAt ?: return
+        lastAppLaunchAt = null
+        val elapsedSeconds = ((System.currentTimeMillis() - launchedAt) / 1000).toInt()
+        val capped = elapsedSeconds.coerceIn(0, MAX_RETURN_GAP_SECONDS)
+        viewModelScope.launch { settingsRepository.addUsageSeconds(capped, today()) }
+    }
+
+    /** Advance the usage counter while the launcher itself is on screen. */
+    fun tickUsage(seconds: Int) {
+        viewModelScope.launch { settingsRepository.addUsageSeconds(seconds, today()) }
+    }
+
+    fun setTimeLimit(profile: KidProfile, minutes: Int) {
+        viewModelScope.launch { settingsRepository.setTimeLimit(profile, minutes) }
+    }
+
+    /** Parent override from the "time's up" screen: clears today's usage. */
+    fun grantMoreTime() {
+        viewModelScope.launch { settingsRepository.resetUsage(today()) }
+    }
 
     fun switchProfile(profile: KidProfile) {
         viewModelScope.launch { settingsRepository.setActiveProfile(profile) }
@@ -95,6 +135,13 @@ class KidsLauncherViewModel(
         settingsRepository.verifyPin(uiState.value.settings, pin)
 
     companion object {
+        /**
+         * Upper bound on the time credited for a single "left then returned" gap.
+         * Stops an idle/asleep device (child walked away) from draining the whole
+         * daily budget while still counting normal app sessions.
+         */
+        private const val MAX_RETURN_GAP_SECONDS = 20 * 60
+
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]

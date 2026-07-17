@@ -2,6 +2,7 @@ package com.viniciusandrade.kidslauncher.ui
 
 import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -12,9 +13,17 @@ import com.viniciusandrade.kidslauncher.ui.launcher.LauncherScreen
 import com.viniciusandrade.kidslauncher.ui.pin.PinScreen
 import com.viniciusandrade.kidslauncher.ui.settings.SettingsScreen
 import com.viniciusandrade.kidslauncher.ui.theme.KidsLauncherTheme
+import com.viniciusandrade.kidslauncher.ui.timeup.TimeUpScreen
+import kotlinx.coroutines.delay
 
-/** Simple three-state navigation. A launcher has no deep back stack to manage. */
-private enum class Screen { LAUNCHER, PIN, SETTINGS }
+/**
+ * Screens the launcher can show. A launcher has no deep back stack.
+ * PIN gates settings; PIN_TIME gates the parent "grant more time" override.
+ */
+private enum class Screen { LAUNCHER, PIN, SETTINGS, TIME_UP, PIN_TIME }
+
+/** How often we credit screen time while the launcher itself is on screen. */
+private const val TICK_SECONDS = 15
 
 @Composable
 fun KidsLauncherRoot(viewModel: KidsLauncherViewModel) {
@@ -25,8 +34,26 @@ fun KidsLauncherRoot(viewModel: KidsLauncherViewModel) {
     var screen by remember { mutableStateOf(Screen.LAUNCHER) }
     val context = LocalContext.current
 
-    KidsLauncherTheme(profile = state.settings.activeProfile) {
-        when (screen) {
+    val profile = state.settings.activeProfile
+    val hasLimit = state.settings.timeLimitMinutes(profile) > 0
+    val timeUp = state.settings.isTimeUp(profile)
+
+    // Count screen time while the child is actually on the launcher board.
+    LaunchedEffect(screen, hasLimit, timeUp) {
+        if (screen == Screen.LAUNCHER && hasLimit && !timeUp) {
+            while (true) {
+                delay(TICK_SECONDS * 1000L)
+                viewModel.tickUsage(TICK_SECONDS)
+            }
+        }
+    }
+
+    // When the budget is spent, replace the board with the friendly lock —
+    // unless a parent flow (PIN / settings) is already open.
+    val effectiveScreen = if (timeUp && screen == Screen.LAUNCHER) Screen.TIME_UP else screen
+
+    KidsLauncherTheme(profile = profile) {
+        when (effectiveScreen) {
             Screen.LAUNCHER -> LauncherScreen(
                 state = state,
                 onLaunch = { app ->
@@ -54,6 +81,21 @@ fun KidsLauncherRoot(viewModel: KidsLauncherViewModel) {
                 onSelectProfile = viewModel::switchProfile,
                 onToggleApp = viewModel::setAppAllowed,
                 onChangePin = viewModel::setPin,
+                onSetTimeLimit = viewModel::setTimeLimit,
+            )
+
+            Screen.TIME_UP -> TimeUpScreen(
+                onUnlock = { screen = Screen.PIN_TIME },
+            )
+
+            Screen.PIN_TIME -> PinScreen(
+                title = "Digite o PIN dos pais",
+                onVerify = viewModel::verifyPin,
+                onSuccess = {
+                    viewModel.grantMoreTime()
+                    screen = Screen.LAUNCHER
+                },
+                onCancel = { screen = Screen.TIME_UP },
             )
         }
     }
