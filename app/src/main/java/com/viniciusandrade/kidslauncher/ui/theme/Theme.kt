@@ -1,9 +1,12 @@
 package com.viniciusandrade.kidslauncher.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.text.TextStyle
 import com.viniciusandrade.kidslauncher.data.model.KidProfile
 
 private fun schemeFor(profile: KidProfile) = when (profile) {
@@ -42,6 +45,12 @@ fun KidsLauncherTheme(
     MaterialTheme(
         colorScheme = schemeFor(profile),
         typography = KidsTypography,
-        content = content,
-    )
+    ) {
+        // Make the rounded font the default for every Text, even ones that pass a
+        // custom TextStyle (Text merges its style over LocalTextStyle).
+        CompositionLocalProvider(
+            LocalTextStyle provides TextStyle(fontFamily = BalooFamily),
+            content = content,
+        )
+    }
 }

@@ -9,8 +9,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.viniciusandrade.kidslauncher.data.model.KidVideo
 import com.viniciusandrade.kidslauncher.ui.launcher.LauncherScreen
 import com.viniciusandrade.kidslauncher.ui.pin.PinScreen
+import com.viniciusandrade.kidslauncher.ui.player.PlayerScreen
 import com.viniciusandrade.kidslauncher.ui.settings.SettingsScreen
 import com.viniciusandrade.kidslauncher.ui.theme.KidsLauncherTheme
 import com.viniciusandrade.kidslauncher.ui.timeup.TimeUpScreen
@@ -18,9 +20,10 @@ import kotlinx.coroutines.delay
 
 /**
  * Screens the launcher can show. A launcher has no deep back stack.
- * PIN gates settings; PIN_TIME gates the parent "grant more time" override.
+ * PIN gates settings; PIN_TIME gates the parent "grant more time" override;
+ * PLAYER hosts the in-app YouTube player.
  */
-private enum class Screen { LAUNCHER, PIN, SETTINGS, TIME_UP, PIN_TIME }
+private enum class Screen { LAUNCHER, PIN, SETTINGS, TIME_UP, PIN_TIME, PLAYER }
 
 /** How often we credit screen time while the launcher itself is on screen. */
 private const val TICK_SECONDS = 15
@@ -32,15 +35,17 @@ fun KidsLauncherRoot(viewModel: KidsLauncherViewModel) {
     // intentionally fall back to the launcher rather than leaving a child on the
     // settings screen.
     var screen by remember { mutableStateOf(Screen.LAUNCHER) }
+    var playingVideo by remember { mutableStateOf<KidVideo?>(null) }
     val context = LocalContext.current
 
     val profile = state.settings.activeProfile
     val hasLimit = state.settings.timeLimitMinutes(profile) > 0
     val timeUp = state.settings.isTimeUp(profile)
 
-    // Count screen time while the child is actually on the launcher board.
+    // Count screen time while the child is on a "using" screen (board or player).
+    val onKidScreen = screen == Screen.LAUNCHER || screen == Screen.PLAYER
     LaunchedEffect(screen, hasLimit, timeUp) {
-        if (screen == Screen.LAUNCHER && hasLimit && !timeUp) {
+        if (onKidScreen && hasLimit && !timeUp) {
             while (true) {
                 delay(TICK_SECONDS * 1000L)
                 viewModel.tickUsage(TICK_SECONDS)
@@ -48,9 +53,9 @@ fun KidsLauncherRoot(viewModel: KidsLauncherViewModel) {
         }
     }
 
-    // When the budget is spent, replace the board with the friendly lock —
+    // When the budget is spent, replace the board/player with the friendly lock —
     // unless a parent flow (PIN / settings) is already open.
-    val effectiveScreen = if (timeUp && screen == Screen.LAUNCHER) Screen.TIME_UP else screen
+    val effectiveScreen = if (timeUp && onKidScreen) Screen.TIME_UP else screen
 
     KidsLauncherTheme(profile = profile) {
         when (effectiveScreen) {
@@ -66,16 +71,27 @@ fun KidsLauncherRoot(viewModel: KidsLauncherViewModel) {
                     }
                 },
                 onOpenVideo = { video ->
-                    viewModel.openVideo(video) {
-                        Toast.makeText(
-                            context,
-                            "Não consegui abrir o vídeo",
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    }
+                    // Play inside the launcher instead of leaving to YouTube.
+                    playingVideo = video
+                    screen = Screen.PLAYER
                 },
                 onOpenSettings = { screen = Screen.PIN },
             )
+
+            Screen.PLAYER -> {
+                val video = playingVideo
+                if (video == null) {
+                    screen = Screen.LAUNCHER
+                } else {
+                    PlayerScreen(
+                        videoId = video.id,
+                        onClose = {
+                            playingVideo = null
+                            screen = Screen.LAUNCHER
+                        },
+                    )
+                }
+            }
 
             Screen.PIN -> PinScreen(
                 title = "Digite o PIN dos pais",

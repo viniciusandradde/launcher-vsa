@@ -69,6 +69,10 @@ dependencies {
     // Image loading for YouTube thumbnails
     implementation(libs.coil.compose)
 
+    // In-app YouTube playback (IFrame player in a WebView) + celebration particles
+    implementation(libs.youtube.player)
+    implementation(libs.konfetti.compose)
+
     // Glance App Widget (Jetpack)
     implementation(libs.androidx.glance.appwidget)
 
