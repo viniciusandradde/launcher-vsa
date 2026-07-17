@@ -1,6 +1,7 @@
 package com.viniciusandrade.kidslauncher.ui.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
@@ -11,6 +12,7 @@ import com.viniciusandrade.kidslauncher.R
 
 // Baloo 2 — a rounded, friendly variable font bundled in res/font. Each weight is
 // pulled from the single variable file via FontVariation (API 26+).
+@OptIn(ExperimentalTextApi::class)
 private fun baloo(weight: Int) = Font(
     resId = R.font.baloo2,
     weight = FontWeight(weight),
