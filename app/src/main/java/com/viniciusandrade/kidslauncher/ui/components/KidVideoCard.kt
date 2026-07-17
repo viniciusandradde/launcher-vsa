@@ -23,14 +23,21 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import kotlin.math.hypot
+import kotlin.math.sin
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,6 +56,9 @@ fun KidVideoCard(
     video: KidVideo,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    fingerProvider: () -> Offset? = { null },
+    waveIndex: Int = 0,
+    waveProvider: () -> Float? = { null },
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -60,6 +70,7 @@ fun KidVideoCard(
         ),
         label = "videoScale",
     )
+    var center by remember { mutableStateOf(Offset.Zero) }
 
     Surface(
         color = Color(0xFFD32F2F), // YouTube-ish red as the loading backdrop
@@ -68,9 +79,30 @@ fun KidVideoCard(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(1f)
+            .onGloballyPositioned { center = it.boundsInRoot().center }
             .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
+                var s = scale
+                var tx = 0f
+                var ty = 0f
+                val finger = fingerProvider()
+                if (finger != null && center != Offset.Zero) {
+                    val dx = center.x - finger.x
+                    val dy = center.y - finger.y
+                    val dist = hypot(dx, dy)
+                    val radius = this.size.width * 1.4f
+                    val react = (1f - dist / radius).coerceIn(0f, 1f)
+                    s *= 1f + 0.16f * react
+                    tx = dx / (dist + 1f) * 14f * react
+                    ty = dy / (dist + 1f) * 14f * react
+                }
+                val phase = waveProvider()
+                if (phase != null) {
+                    ty += sin(phase - waveIndex * 0.6f) * 10f
+                }
+                scaleX = s
+                scaleY = s
+                translationX = tx
+                translationY = ty
             }
             .clip(RoundedCornerShape(32.dp))
             .clickable(
