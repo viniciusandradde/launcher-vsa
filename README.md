@@ -1,5 +1,8 @@
 # Kids Launcher VSA
 
+> **Estado:** aplicação Android em desenvolvimento. O repositório contém código Kotlin/Compose e funcionalidades implementadas, mas a auditoria de segurança, testes em dispositivos e build release ainda precisam ser concluídos. Não apresentar como kiosk inviolável.
+
+
 Launcher Android personalizado para crianças, com **dois perfis num único APK**:
 
 | Perfil | Idade | Layout | Cara |
@@ -212,8 +215,7 @@ Cada perfil tem sua própria whitelist; troque o perfil ativo para configurar o 
 
 - O **PIN nunca é salvo em texto puro**: guardamos apenas o hash **SHA-256** no
   DataStore (`SettingsRepository`).
-- Sem coleta de dados, sem rede, sem analytics. O app **não pede permissões
-  perigosas** — usa `<queries>` (MAIN/LAUNCHER) em vez de `QUERY_ALL_PACKAGES`.
+- Não há analytics identificado no código consultado. O app usa rede para miniaturas e reprodução de vídeos do YouTube; isso deve ser informado ao responsável. Usa `<queries>` (MAIN/LAUNCHER) em vez de `QUERY_ALL_PACKAGES`.
 - Backup do Android inclui só as preferências (perfil/whitelist/hash do PIN).
 
 ---
@@ -222,11 +224,18 @@ Cada perfil tem sua própria whitelist; troque o perfil ativo para configurar o 
 
 - **Não é kiosk**: uma criança determinada ainda pode acessar a barra de status /
   gestos do sistema. Bloqueio total exige *lock task* + Device Owner (roadmap).
-- **Sem limite de tempo** nesta versão.
+- O limite diário de tempo e a tela de tempo encerrado estão presentes no código; validar os cenários de uso em segundo plano e retorno de apps antes de release.
 - O widget usa `updatePeriodMillis` de 30 min (limite do Android); para relógio
   ao segundo seria preciso um `Worker`/alarme — desnecessário para "glanceable".
 
 ---
+
+## Documentação de engenharia VSA
+
+- [Documento de Produto](docs/PRODUCT.md)
+- [Arquitetura](docs/ARCHITECTURE.md)
+- [Segurança e Privacidade](docs/SECURITY-PRIVACY.md)
+- [Roadmap](docs/ROADMAP.md)
 
 ## Evolução (roadmap)
 
